@@ -1,16 +1,20 @@
-
 services:
   postgres:
     image: postgres:15
     container_name: postgres
     environment:
-      POSTGRES_USER: your_user
-      POSTGRES_PASSWORD: your_password
-      POSTGRES_DB: your_db
+      POSTGRES_USER: inventory_user
+      POSTGRES_PASSWORD: inventory123
+      POSTGRES_DB: inventory_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - hadoop_net
     restart: unless-stopped
 volumes:
   pgdata:
+networks:
+  hadoop_net:
+    external: true

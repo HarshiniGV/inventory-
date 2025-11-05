@@ -1,28 +1,3 @@
-# # consumer_print.py
-# from kafka import KafkaConsumer
-# import json
-
-# # Kafka consumer
-# consumer = KafkaConsumer(
-#     'inventory-alerts',
-#     bootstrap_servers='localhost:9092',
-#     value_deserializer=lambda m: json.loads(m.decode('utf-8')),
-#     auto_offset_reset='earliest',
-#     enable_auto_commit=True
-# )
-
-# for msg in consumer:
-#     alert = msg.value
-#     item_name = alert['item_name']
-#     quantity = alert['quantity']
-
-#     # Print alert to terminal instead of Slack
-#     if quantity < 10:
-#         print(f"⚠️ ALERT: Quantity of {item_name} is low ({quantity})!")
-#     else:
-#         print(f"{item_name} quantity is OK ({quantity})")
-# consumer_with_slack.py
-# consumer_with_slack.py
 from kafka import KafkaConsumer
 import json
 import requests
