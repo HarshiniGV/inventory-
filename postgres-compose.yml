@@ -13,8 +13,35 @@ services:
     networks:
       - hadoop_net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inventory_user -d inventory_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase
+    ports:
+      - "4000:3000"
+    environment:
+      # Use H2 file database for Metabase's internal data (simpler setup)
+      MB_DB_FILE: /metabase-data/metabase.db
+      # Java memory settings (optional, helps with startup)
+      JAVA_OPTS: "-Xmx512m"
+    volumes:
+      - metabase-data:/metabase-data
+    networks:
+      - hadoop_net
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   pgdata:
+  metabase-data:
+
 networks:
   hadoop_net:
     external: true
