@@ -11,7 +11,7 @@ import logging
 from datetime import datetime
 import time
 
-# Set up logging
+
 LOG_DIR = "logs"
 os.makedirs(LOG_DIR, exist_ok=True)
 LOG_FILE = os.path.join(LOG_DIR, "producer.log")
@@ -27,7 +27,7 @@ logging.basicConfig(
 
 # Hadoop configuration
 HADOOP_CONFIG = {
-    "namenode_host": "localhost",  # Using localhost since we're running from host machine
+    "namenode_host": "localhost",  
     "namenode_port": 9870,
     "webhdfs_port": 9870,
     "datanode_port": 9865,
@@ -47,42 +47,41 @@ def fix_redirect_url(redirect_url):
 def save_transaction_to_hadoop(transaction_data):
     """Save transaction data to Hadoop as Parquet file"""
     try:
-        # Add a delay to allow the datanode to initialize if needed
+        
         time.sleep(1)
 
-        # Create DataFrame from transaction
+        
         df = pd.DataFrame([transaction_data])
         
-        # Convert to PyArrow Table
+       
         table = pa.Table.from_pandas(df)
         
-        # Generate filename with timestamp
+       
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         hadoop_path = f"/user/root/transactions/transaction_{timestamp}.parquet"
         
-        # Save as temporary Parquet file
+       
         temp_file = f"temp_transaction_{timestamp}.parquet"
         pq.write_table(table, temp_file)
         
-        # WebHDFS endpoints
+       
         namenode_url = f"http://{HADOOP_CONFIG['namenode_host']}:{HADOOP_CONFIG['webhdfs_port']}"
         webhdfs_url = f"{namenode_url}/webhdfs/v1{hadoop_path}"
         
-        # Create directory if it doesn't exist
+        
         dir_path = "/user/root/transactions"
         mkdir_url = f"{namenode_url}/webhdfs/v1{dir_path}?op=MKDIRS&user.name={HADOOP_CONFIG['user']}"
         mkdir_resp = requests.put(mkdir_url)
         logging.info(f"Create directory response: {mkdir_resp.status_code}")
         
-        # Upload file to HDFS
         put_url = f"{webhdfs_url}?op=CREATE&user.name={HADOOP_CONFIG['user']}&overwrite=true"
         
-        # Get redirect URL
+        
         resp = requests.put(put_url, allow_redirects=False)
         if resp.status_code == 307:
             redirect_url = fix_redirect_url(resp.headers['Location'])
             
-            # Upload the file
+            
             with open(temp_file, 'rb') as f:
                 upload_resp = requests.put(
                     redirect_url,
@@ -94,7 +93,7 @@ def save_transaction_to_hadoop(transaction_data):
                 else:
                     logging.error(f"Failed to upload transaction: {upload_resp.text}")
         
-        # Clean up temporary file
+        
         os.remove(temp_file)
         
     except Exception as e:

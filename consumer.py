@@ -3,7 +3,7 @@ import json
 import requests
 
 # Replace with your Slack webhook URL
-slack_webhook_url = "https://hooks.slack.com/services/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"
+slack_webhook_url = ""
 
 # Kafka consumer
 consumer = KafkaConsumer(
@@ -24,15 +24,15 @@ for msg in consumer:
     if quantity < 10:
         print(f"⚠️ ALERT: Quantity of {item_name} is low ({quantity})!")
 
-        # Prepare payload
+        
         payload = {
             "text": f"⚠️ ALERT: Quantity of {item_name} is low ({quantity})!"
         }
 
-        # Send Slack message
+     
         response = requests.post(slack_webhook_url, json=payload)
 
-        # Check response
+        
         if response.status_code == 200:
             print("Message sent successfully to Slack!")
         else:

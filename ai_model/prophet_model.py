@@ -1,5 +1,5 @@
-# --- CONFIG ---
-# Dataset: https://www.kaggle.com/datasets/vivek468/superstore-dataset-final
+
+# Dataset used: https://www.kaggle.com/datasets/vivek468/superstore-dataset-final
 import pandas as pd
 import numpy as np
 from prophet import Prophet
@@ -17,20 +17,20 @@ import sys
 # PostgreSQL configuration
 DB_CONFIG = {
     "host": "localhost",
-    "database": "inventory_db",  # Matches POSTGRES_DB in docker-compose
-    "user": "inventory_user",  # Matches POSTGRES_USER in docker-compose
-    "password": "inventory123",  # Matches POSTGRES_PASSWORD in docker-compose
+    "database": "inventory_db", 
+    "user": "inventory_user",  
+    "password": "inventory123",  
     "port": "5433",
 }
 
 # Hadoop configuration
 HADOOP_CONFIG = {
-    "namenode_host": "localhost",  # Hadoop namenode host
-    "namenode_port": 9870,  # Hadoop namenode WebHDFS port
-    "webhdfs_port": 9870,  # WebHDFS port
-    "datanode_port": 9865,  # Hadoop datanode WebHDFS port (mapped from 9864)
-    "hdfs_port": 9000,  # HDFS client port
-    "user": "root",  # Hadoop user (using root for our Docker setup)
+    "namenode_host": "localhost",  
+    "namenode_port": 9870,  
+    "webhdfs_port": 9870, 
+    "datanode_port": 9865,  
+    "hdfs_port": 9000,  
+    "user": "root",  
 }
 
 # Set up logging
@@ -58,7 +58,7 @@ def load_and_prepare_data():
     """Load data from Hadoop and prepare it for training"""
     try:
         logging.info("Starting data load from Hadoop")
-        # WebHDFS endpoints
+       
         namenode_url = (
             f"http://{HADOOP_CONFIG['namenode_host']}:{HADOOP_CONFIG['webhdfs_port']}"
         )
@@ -67,29 +67,28 @@ def load_and_prepare_data():
 
         logging.info(f"Accessing WebHDFS URL: {webhdfs_url}")
 
-        # Get redirect URL
+      
         resp = requests.get(webhdfs_url, allow_redirects=False)
         if resp.status_code == 307:
-            # Fix the redirect URL
+          
             redirect_url = fix_redirect_url(resp.headers["Location"])
             logging.info(f"Redirecting to DataNode URL: {redirect_url}")
 
-            # Download the parquet file
+           
             logging.info("Downloading data from Hadoop")
             download_resp = requests.get(redirect_url)
             if download_resp.status_code == 200:
-                # Save temporarily and read with pyarrow
+                
                 with open("temp_download.parquet", "wb") as f:
                     f.write(download_resp.content)
 
-                # Read parquet file
+                
                 table = pq.read_table("temp_download.parquet")
                 df = table.to_pandas()
 
-                # Clean up
+               
                 os.remove("temp_download.parquet")
 
-                # Process the data
                 df = df[df["Category"] == CATEGORY]
                 df = df[["Product ID", "Product Name", "Order Date", "Quantity"]]
                 df["Order Date"] = pd.to_datetime(df["Order Date"])
@@ -133,7 +132,7 @@ def generate_mock_data(agg, n_products=3, n_days=7):
         product_id = row["Product ID"]
         product_name = row["Product Name"]
 
-        # Get historical mean and std for this product
+        
         hist_stats = agg[agg["Product ID"] == product_id]["Quantity"].agg(
             ["mean", "std"]
         )
@@ -142,7 +141,7 @@ def generate_mock_data(agg, n_products=3, n_days=7):
 
         for i in range(7):
             mock_date = today + timedelta(days=i)
-            # Generate quantity based on historical patterns
+            # mock quantity with some randomness
             quantity = max(1, int(np.random.normal(mean_qty, std_qty / 2)))
             mock_data.append(
                 {
@@ -166,7 +165,7 @@ def predict_min_and_restock(agg, mock_df):
             columns={"Order Date": "ds", "Quantity": "y"}
         )
 
-        # Add logging to understand the data
+        # Add logging 
         logging.info(f"\nProcessing Product ID: {product_id}")
         logging.info(f"Historical data points: {len(hist)}")
         logging.info(f"Date range: {hist['ds'].min()} to {hist['ds'].max()}")
@@ -186,6 +185,7 @@ def predict_min_and_restock(agg, mock_df):
             )
             continue
 
+            # predictions
         try:
             m = Prophet(
                 yearly_seasonality=True,
@@ -198,7 +198,7 @@ def predict_min_and_restock(agg, mock_df):
             future = m.make_future_dataframe(periods=60)
             forecast = m.predict(future)
 
-            # Log predictions
+        
             logging.info(
                 f"7-day forecast values: {forecast.tail(60).head(7)['yhat'].values}"
             )
@@ -207,7 +207,7 @@ def predict_min_and_restock(agg, mock_df):
             min_qty = max(0, forecast.tail(60).head(7)["yhat"].sum())
             restock_qty = max(0, forecast.tail(60)["yhat"].sum())
 
-            # Round to nearest whole number
+            
             min_qty = int(round(min_qty))
             restock_qty = int(round(restock_qty))
 
@@ -232,7 +232,7 @@ def fix_redirect_url(redirect_url):
     """Fix the redirect URL to use localhost instead of container hostname"""
     import re
 
-    # Replace container hostname with localhost and use the correct port
+    
     return re.sub(
         r"http://[^:]+:9864",
         f'http://localhost:{HADOOP_CONFIG["datanode_port"]}',
@@ -243,13 +243,12 @@ def fix_redirect_url(redirect_url):
 def save_to_postgres(df):
     """Save DataFrame to PostgreSQL database"""
     try:
-        # Create connection string
+       
         conn_string = f"postgresql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
         engine = create_engine(conn_string)
 
-        # Create connection and create table
         with engine.connect() as connection:
-            # Create the table with the correct schema
+
             connection.execute(
                 text(
                     """
@@ -264,7 +263,6 @@ def save_to_postgres(df):
             )
             connection.commit()
 
-        # Save the dataframe to the table
         df.to_sql("furniture_predictions", engine, if_exists="replace", index=False)
         print(
             f"Successfully saved predictions to PostgreSQL table: furniture_predictions"
@@ -279,17 +277,15 @@ def main():
         logging.info("Starting weekly inventory predictions")
         logging.info(f"Running predictions for category: {CATEGORY}")
 
-        # Load and prepare data
+
         logging.info("Loading and preparing data...")
         agg = load_and_prepare_data()
         logging.info(f"Loaded data with {len(agg)} records")
 
-        # Generate predictions
         logging.info("Generating predictions...")
         mock_df = generate_mock_data(agg)
         mock_df = predict_min_and_restock(agg, mock_df)
 
-        # Summarize predictions
         summary = (
             mock_df.groupby(["Product ID", "Product Name"])[
                 ["min_quantity_7d", "restock_60d"]
@@ -300,11 +296,11 @@ def main():
         logging.info("\nSummary predictions per product:")
         print(summary)
 
-        # Save results to CSV
+
         summary.to_csv(RESULTS_PATH, index=False)
         logging.info(f"Predictions saved to {RESULTS_PATH}")
 
-        # Save to PostgreSQL
+
         logging.info("Saving predictions to PostgreSQL...")
         save_to_postgres(summary)
 
@@ -312,7 +308,7 @@ def main():
 
     except Exception as e:
         logging.error(f"Error during prediction process: {str(e)}", exc_info=True)
-        raise  # Re-raise the exception for the batch script to catch
+        raise  
 
 
 if __name__ == "__main__":

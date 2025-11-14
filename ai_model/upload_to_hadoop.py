@@ -9,12 +9,12 @@ import time
 
 # Hadoop configuration
 HADOOP_CONFIG = {
-    "namenode_host": "localhost",  # Hadoop namenode host
-    "namenode_port": 9870,  # Hadoop namenode WebHDFS port
-    "webhdfs_port": 9870,  # WebHDFS port
-    "datanode_port": 9865,  # Hadoop datanode WebHDFS port (mapped from 9864)
-    "hdfs_port": 9000,  # HDFS client port
-    "user": "root",  # Hadoop user (using root for our Docker setup)
+    "namenode_host": "localhost",  
+    "namenode_port": 9870,
+    "webhdfs_port": 9870,  
+    "datanode_port": 9865,  
+    "hdfs_port": 9000, 
+    "user": "root", 
 }
 
 # Set up logging
@@ -43,27 +43,26 @@ def fix_redirect_url(redirect_url):
 
 def upload_csv_to_hadoop(csv_path, hadoop_path):
     """Upload CSV file to Hadoop as Parquet file using WebHDFS"""
-    # Add a delay to allow the datanode to initialize
+    
     time.sleep(10)
 
     try:
         logging.info(f"Reading CSV file from {csv_path}")
         df = pd.read_csv(csv_path, encoding="latin1")
 
-        # Convert pandas DataFrame to PyArrow Table
         table = pa.Table.from_pandas(df)
 
-        # Save as Parquet file temporarily
+        
         local_path = "temp_store_data.parquet"
         pq.write_table(table, local_path)
 
-        # WebHDFS endpoints
+       
         namenode_url = (
             f"http://{HADOOP_CONFIG['namenode_host']}:{HADOOP_CONFIG['webhdfs_port']}"
         )
         webhdfs_url = f"{namenode_url}/webhdfs/v1{hadoop_path}"
 
-        # Create directory if it doesn't exist
+      
         dir_path = os.path.dirname(hadoop_path)
         if dir_path:
             mkdir_url = f"{namenode_url}/webhdfs/v1{dir_path}?op=MKDIRS&user.name={HADOOP_CONFIG['user']}"
@@ -74,19 +73,19 @@ def upload_csv_to_hadoop(csv_path, hadoop_path):
                 raise Exception(f"Failed to create directory: {mkdir_resp.text}")
             logging.info(f"Successfully created directory: {dir_path}")
 
-        # Upload file to HDFS
+      
         put_url = (
             f"{webhdfs_url}?op=CREATE&user.name={HADOOP_CONFIG['user']}&overwrite=true"
         )
 
-        # Get redirect URL
+       
         resp = requests.put(put_url, allow_redirects=False)
         if resp.status_code == 307:
-            # Fix the redirect URL to use correct hostname and port
+       
             redirect_url = fix_redirect_url(resp.headers["Location"])
             logging.info(f"Uploading file to: {redirect_url}")
 
-            # Upload the file
+            
             with open(local_path, "rb") as f:
                 logging.info(f"Uploading file to Hadoop path: {hadoop_path}")
                 upload_resp = requests.put(
@@ -114,7 +113,7 @@ def upload_csv_to_hadoop(csv_path, hadoop_path):
         else:
             raise Exception(f"Failed to initiate file creation: {resp.text}")
 
-        # Clean up temporary file
+      
         os.remove(local_path)
 
     except Exception as e:
