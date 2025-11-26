@@ -44,11 +44,9 @@ This project implements an end-to-end **inventory management system** combining 
 
 ## **📂 System Architecture**
 
-Add your diagram here:
 
-```md
 ![Architecture](images/architecture.png)
-```
+
 
 ---
 
@@ -92,14 +90,13 @@ Add your diagram here:
 
 Add your images:
 
-```md
+
 
 ![Predictions](images/prediction.jpeg)
 ![Predictions](images/prediction2.jpeg)
 ![Producer](images/producer.jpeg)
 ![Slack Alert](images/Slackalerts.jpeg)
 ![Dashboard](image/Metabase.jpeg)
-```
 
 ---
 
