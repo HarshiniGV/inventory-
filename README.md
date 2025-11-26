@@ -106,27 +106,8 @@ Slack Alerts
 ---
 Dashboards
 ---
-![Dashboard](image/MetaBase.jpeg)
+![Dashboard](images/MetaBase.jpeg)
 ---
 ---
 
-## **👥 Team**
-
-* Gautam
-* Harshini
-* * (add remaining team members if needed)
-
----
-
-## **🔗 GitHub Repository**
-
-[https://github.com/your-repo-here](https://github.com/your-repo-here)
-
----
-
-If you want, I can also make:
-✅ a **shorter README**
-✅ a **more aesthetic README with badges**
-✅ a **project description for placements**
-Just tell me!
 
