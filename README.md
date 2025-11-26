@@ -91,13 +91,23 @@ This project implements an end-to-end **inventory management system** combining 
 Add your images:
 
 
-
+Predicts
+---
 ![Predictions](images/prediction.jpeg)
 ![Predictions](images/prediction2.jpeg)
+---
+Kafka Producer
+---
 ![Producer](images/producer.jpeg)
+---
+Slack Alerts
+---
 ![Slack Alert](images/Slackalerts.jpeg)
-![Dashboard](image/Metabase.jpeg)
-
+---
+Dashboards
+---
+![Dashboard](image/MetaBase.jpeg)
+---
 ---
 
 ## **👥 Team**
